@@ -64,3 +64,46 @@ def users_destroy(user_id):
     db.session.commit()
 
     return redirect("/users")
+
+@app.route('/users/<int:user_id>/posts/new')
+def new_post_form(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('posts/new.html', user=user)
+
+@app.route('/users/<int:user_id>/posts/new', methods=["POST"])
+def posts_new(user_id):
+    user = User.query.get_or_404(user_id)
+    title = request.form['title']
+    content = request.form['content']
+    new_post = Post(title=title, content=content, user_id=user.id)
+    db.session.add(new_post)
+    db.session.commit()
+    
+    return redirect(url_for('show_user', user_id=user.id))
+
+@app.route('/posts/<int:post_id>')
+def show_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('posts/show.html', post=post)
+
+@app.route('/posts/<int:post_id>/edit')
+def posts_edit(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('posts/edit.html', post=post)
+
+@app.route('/posts/<int:post_id>/edit', methods=["POST"])
+def posts_update(post_id):
+    post = Post.query.get_or_404(post_id)
+    post.title = request.form['title']
+    post.content = request.form['content']
+    db.session.add(post)
+    db.session.commit()
+    return redirect(f"/users/{post.user_id}")
+
+@app.route('/posts/<int:post_id>/delete', methods=["POST"])
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    user_id = post.user_id
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('show_user', user_id=user_id))
